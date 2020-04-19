@@ -17,5 +17,7 @@ int main()
 	inet_aton("192.168.1.17", &myInAddr);
 	sockaddr_in myAddr = {AF_INET, htons(3490), myInAddr, {0,0}};
 	bind(sockfd, myAddr, myAddrLen);
+
+	
 	return 0;
 }
