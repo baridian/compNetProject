@@ -3,4 +3,4 @@ project(compNetProject)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(compNetProject main.cpp)
+add_executable(compNetProject src/main.cpp src/Server.cpp src/Server.h)
