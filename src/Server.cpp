@@ -1,6 +1,5 @@
 #include <cstdio>
 #include "Server.h"
-#include <iostream>
 
 int Server::serverExists = 0;
 
@@ -8,34 +7,61 @@ Server Server::serverSingleton = Server();
 
 Server::Server()
 {
+	int iResult = 0;
+	WSADATA wsaData = {0};
 	if (!serverExists)
 	{
-		printf("server does not exist\n");
+		//ensure function can only be called once
 		serverExists = 1;
+
+		//start up wsa
+		iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+		if (iResult != 0)
+		{
+			fprintf(stderr, "ERROR %d: WSAStartup failed\n", iResult);
+			exit(1);
+		}
+
 		// Create a listening socket
-		ListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-		printf("initialized socket\n");
+		if((ListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET)
+		{
+			fprintf(stderr,"ERROR %d: invalid socket created\n",WSAGetLastError());
+			exit(1);
+		}
+
 		// Get the local host information
 		localHost = gethostbyname("localhost");
+		if(localHost == NULL)
+		{
+			fprintf(stderr, "ERROR %d: gethostbyname returned NULL when initializing server\n", WSAGetLastError());
+			exit(1);
+		}
 		localIP = inet_ntoa(*(struct in_addr *) *localHost->h_addr_list);
-		printf("got local host info\n");
+
 
 		// Set up the sockaddr structure
 		saServer.sin_family = AF_INET;
 		saServer.sin_addr.s_addr = inet_addr(localIP);
 		saServer.sin_port = htons(5150);
 		saServerLen = sizeof(saServer);
-		printf("set up sockaddr structure\n");
 
 		// Bind the listening socket using the
 		// information in the sockaddr structure
 		bind(ListenSocket, (SOCKADDR *) &saServer, saServerLen);
-		printf("bound\n");
 
-		assert(listen(ListenSocket, SOMAXCONN) == 0);
-		printf("assert success\n");
+		//start listening
+		if(listen(ListenSocket, SOMAXCONN) != 0)
+		{
+			fprintf(stderr, "ERROR: listen socket failed\n");
+			exit(1);
+		}
 
+		//
 		iSock = accept(ListenSocket, (SOCKADDR *) &saServer, &saServerLen);
+		if(iSock == INVALID_SOCKET)
+		{
+			fprintf(stderr, "ERROR %d: accept failed to set up\n",(int)iSock);
+		}
 		printf("accept set up\n");
 	}
 }
