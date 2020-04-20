@@ -15,6 +15,8 @@ public:
 
 	SOCKET getListenSocket();
 
+	void acceptConnection();
+
 private:
 	Server();
 

@@ -55,15 +55,17 @@ Server::Server()
 			fprintf(stderr, "ERROR: listen socket failed\n");
 			exit(1);
 		}
-
-		//
-		iSock = accept(ListenSocket, (SOCKADDR *) &saServer, &saServerLen);
-		if(iSock == INVALID_SOCKET)
-		{
-			fprintf(stderr, "ERROR %d: accept failed to set up\n",(int)iSock);
-		}
-		printf("accept set up\n");
 	}
+}
+
+void Server::acceptConnection()
+{
+	iSock = accept(ListenSocket, (SOCKADDR *) &saServer, &saServerLen);
+	if(iSock == INVALID_SOCKET)
+	{
+		fprintf(stderr, "ERROR %d: accept failed to set up\n",(int)iSock);
+	}
+	printf("accept set up\n");
 }
 
 sockaddr *Server::getSaServer()
