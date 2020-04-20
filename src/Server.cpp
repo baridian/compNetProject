@@ -16,7 +16,7 @@ Server::Server()
 		ListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 		printf("initialized socket\n");
 		// Get the local host information
-		localHost = gethostbyname("");
+		localHost = gethostbyname("localhost");
 		localIP = inet_ntoa(*(struct in_addr *) *localHost->h_addr_list);
 		printf("got local host info\n");
 
