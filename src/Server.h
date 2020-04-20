@@ -1,7 +1,7 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#include <winsock.h>
+#include <winsock2.h>
 #include <assert.h>
 
 class Server
