@@ -42,12 +42,16 @@ Server::Server()
 		// Set up the sockaddr structure
 		saServer.sin_family = AF_INET;
 		saServer.sin_addr.s_addr = inet_addr(localIP);
-		saServer.sin_port = htons(5150);
+		saServer.sin_port = htons(80);
 		saServerLen = sizeof(saServer);
 
 		// Bind the listening socket using the
 		// information in the sockaddr structure
-		bind(ListenSocket, (SOCKADDR *) &saServer, saServerLen);
+		if(bind(ListenSocket, (SOCKADDR *) &saServer, saServerLen) != 0)
+		{
+			fprintf(stderr, "ERROR %d: bind returned NULL when initializing server\n", WSAGetLastError());
+			exit(1);
+		}
 
 		//start listening
 		if(listen(ListenSocket, SOMAXCONN) != 0)
@@ -61,11 +65,10 @@ Server::Server()
 void Server::acceptConnection()
 {
 	iSock = accept(ListenSocket, (SOCKADDR *) &saServer, &saServerLen);
-	if(iSock == INVALID_SOCKET)
+	if(iSock == SOCKET_ERROR)
 	{
 		fprintf(stderr, "ERROR %d: accept failed to set up\n",(int)iSock);
 	}
-	printf("accept set up\n");
 }
 
 sockaddr *Server::getSaServer()

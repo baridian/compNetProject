@@ -54,6 +54,16 @@ public:
 		return ptr;
 	}
 
+	operator T *() const
+	{
+		return ptr;
+	}
+
+	T operator*()
+	{
+		return *ptr;
+	}
+
 	~Ref()
 	{
 		int oldNum = *(int *)allocated.read(&ptr);

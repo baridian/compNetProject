@@ -22,7 +22,7 @@ private:
 
 	static Server serverSingleton;
 	static int serverExists;
-	SOCKET ListenSocket;
+	SOCKET  ListenSocket;
 	struct sockaddr_in saServer;
 	hostent* localHost;
 	char* localIP;
