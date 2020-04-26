@@ -1,6 +1,9 @@
 #include <cstdio>
 #include "Server.h"
 
+#define PORT_NUMBER 80
+#define HOST_BY_NAME "10.50.120.215"
+
 int Server::serverExists = 0;
 
 Server Server::serverSingleton = Server();
@@ -30,7 +33,7 @@ Server::Server()
 		}
 
 		// Get the local host information
-		localHost = gethostbyname("localhost");
+		localHost = gethostbyname(HOST_BY_NAME);
 		if(localHost == NULL)
 		{
 			fprintf(stderr, "ERROR %d: gethostbyname returned NULL when initializing server\n", WSAGetLastError());
@@ -42,7 +45,7 @@ Server::Server()
 		// Set up the sockaddr structure
 		saServer.sin_family = AF_INET;
 		saServer.sin_addr.s_addr = inet_addr(localIP);
-		saServer.sin_port = htons(80);
+		saServer.sin_port = htons(PORT_NUMBER);
 		saServerLen = sizeof(saServer);
 
 		// Bind the listening socket using the
