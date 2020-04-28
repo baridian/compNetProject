@@ -2,7 +2,7 @@
 #include "Server.h"
 
 #define PORT_NUMBER 80
-#define HOST_BY_NAME "10.50.120.215"
+#define HOST_BY_NAME "10.50.120.179"
 
 int Server::serverExists = 0;
 
@@ -63,6 +63,17 @@ Server::Server()
 			exit(1);
 		}
 	}
+}
+
+int Server::receive(char *buffer, int bufferLength)
+{
+	int length = recv(getISock(), buffer, bufferLength,0);
+	if(length < 0)
+	{
+		printf("recv failed: %d\n", WSAGetLastError());
+		exit(1);
+	}
+	return length;
 }
 
 void Server::acceptConnection()

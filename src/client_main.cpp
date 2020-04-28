@@ -3,12 +3,12 @@
 #include <assert.h>
 #include <unistd.h>
 #include <zconf.h>
+#include "Buffer.h"
 
 //how to build: add make to PATH
 //make -f client_main.mak
 //must be in src directory!!
-
-SOCKET setupSocket(const char *address, int port)
+SOCKET makeSocket(const char *address, int portNumber)
 {
 	WSADATA wsaData = {0};
 	struct sockaddr_in saServer;
@@ -18,22 +18,78 @@ SOCKET setupSocket(const char *address, int port)
 	// Set up the sockaddr structure
 	saServer.sin_family = AF_INET;
 	saServer.sin_addr.s_addr = inet_addr(inet_ntoa(*(struct in_addr *) *gethostbyname(address)->h_addr_list));
-	saServer.sin_port = htons(port);
+	saServer.sin_port = htons(portNumber);
 
-	assert(connect(mySocket, (SOCKADDR *) &saServer, sizeof(saServer)) == 0);
-
+	if(connect(mySocket, (SOCKADDR *) &saServer, sizeof(saServer)) != 0)
+	{
+		fprintf(stderr,"ERROR: could not establish connection to server.\n");
+		exit(1);
+	}
+	printf("connection established\n");
 	return mySocket;
+}
+
+void displayMessages(SOCKET mySocket)
+{
+	char *buffer = (char *)malloc(sizeof(char)*255);
+	int bufferLength = 255;
+	int length;
+	while(strcmp(buffer, "end of file") != 0)
+	{
+		//free(buffer);
+		//buffer = (char *)calloc(255,sizeof(char));
+		//printf("waiting for message\n");
+		length = recv(mySocket, buffer, bufferLength, 0);
+		if (length < 0)
+		{
+			//printf("recv failed: %d\n", WSAGetLastError());
+			exit(1);
+		}
+		if(strcmp(buffer,"end of file") != 0)
+		{
+			printf("%s\n",buffer);
+			sprintf(buffer,"next");
+			send(mySocket,buffer,(int)strlen(buffer) + 1,0);
+		}
+	}
+	//printf("received EOF flag\n");
+	free(buffer);
 }
 
 int main()
 {
 	char *input = (char *)malloc(sizeof(char)*255);
+	SOCKET serverSocket;
+	Buffer buffer;
 
-	SOCKET mySocket = setupSocket("10.50.120.215",80);
+	printf("please enter server address: ");
+	scanf("%s",input);
+	getchar();
+	serverSocket = makeSocket(input,80);
 
-	scanf("%[^\n]s",input);
-	send(mySocket,input,(int)strlen(input) + 1, 0);
-	shutdown(mySocket, SD_SEND);
-	closesocket(mySocket);
+
+	printf("send exit to abort conversation\n");
+	while(strcmp(input,"exit") != 0)
+	{
+		scanf("%[^\n]s", input);
+		getchar();
+		strcat(input,"\n");
+		if(strcmp(input,"exit\n") != 0)
+		{
+			send(serverSocket, input, (int) strlen(input), 0);
+			recv(serverSocket, input, 255, 0);
+			if (strcmp(input, "ack") != 0)
+			{
+				fprintf(stderr, "ERROR: received %s, not ack\n", input);
+				exit(1);
+			}
+			//printf("ack'ed\n");
+			send(serverSocket, "read", (int) strlen("read") + 1, 0);
+			//printf("sent read command\n");
+			displayMessages(serverSocket);
+		}
+	}
+	shutdown(serverSocket, SD_SEND);
+	closesocket(serverSocket);
 	return 0;
 }

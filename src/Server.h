@@ -17,6 +17,8 @@ public:
 
 	void acceptConnection();
 
+	int receive(char *buffer, int bufferLength);
+
 private:
 	Server();
 
