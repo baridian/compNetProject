@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <zconf.h>
 #include "Buffer.h"
+#include "wrap_string.h"
 
 //how to build: add make to PATH
 //make -f client_main.mak
@@ -47,9 +48,9 @@ void displayMessages(SOCKET mySocket)
 		}
 		if(strcmp(buffer,"end of file") != 0)
 		{
-			printf("%s\n",buffer);
-			sprintf(buffer,"next");
-			send(mySocket,buffer,(int)strlen(buffer) + 1,0);
+			unwrap(buffer);
+			printf(">: %s\n",buffer);
+			send(mySocket,"next",(int)strlen("next") + 1,0);
 		}
 	}
 	//printf("received EOF flag\n");
@@ -69,13 +70,14 @@ int main()
 
 
 	printf("send exit to abort conversation\n");
-	while(strcmp(input,"exit") != 0)
+	while(strcmp(input,"exit\n") != 0)
 	{
 		scanf("%[^\n]s", input);
 		getchar();
 		strcat(input,"\n");
 		if(strcmp(input,"exit\n") != 0)
 		{
+			wrap(input);
 			send(serverSocket, input, (int) strlen(input), 0);
 			recv(serverSocket, input, 255, 0);
 			if (strcmp(input, "ack") != 0)
