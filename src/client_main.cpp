@@ -136,14 +136,18 @@ int main()
 				else
 				{
 					outgoing = fopen("client_out.txt","a");
-					fprintf(outgoing,"file\n%s\n", strstr(buffer, ".") + 1);
+					fprintf(outgoing,"\n%s\n", strstr(buffer, ".") + 1);
 					fclose(outgoing);
 					sprintf(commandBuffer,"type %s >> client_out.txt", buffer);
 					system(commandBuffer);
+					fclose(source);
+					outgoing = fopen("client_out.txt","r");
+					sendBinaryFile(serverSocket, outgoing, "client_out.txt");
+					system("del client_out.txt");
+					send(serverSocket, "end of file", (int)strlen("end of file") + 1, 0);
+					recv(serverSocket, buffer, 255, 0);
 				}
-				fclose(source);
 
-				sendBinaryFile(serverSocket, outgoing, "client_out.txt");
 
 			}
 			else //text message

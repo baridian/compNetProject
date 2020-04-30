@@ -81,7 +81,7 @@ void sendBinaryFile(SOCKET socket, FILE *input, const char *file)
 
 	fseek(input, 0, SEEK_END); //get file length
 	i = ftell(input);
-	printf("f len = %d\n", i);
+	//printf("f len = %d\n", i);
 	fileLength = i;
 
 	fclose(input); //return to old position
@@ -89,7 +89,7 @@ void sendBinaryFile(SOCKET socket, FILE *input, const char *file)
 	fseek(input, oldPosition, SEEK_SET);
 	i = oldPosition;
 
-	printf("start position = %d\n", i);
+	//printf("start position = %d\n", i);
 
 	while(i < fileLength) //copy file
 	{

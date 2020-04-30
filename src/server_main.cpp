@@ -65,6 +65,20 @@ int main()
 			printf("attempting read\n");
 			sendData(server->getISock(), "..\\server_out.txt");
 		}
+		else if(strcmp(buffer, "file") == 0) //if special file transfer command received
+		{
+			printf("file detected\n");
+			send(server->getISock(),"file",(int)strlen("file") + 1, 0); //send file request
+			recv(server->getISock(), buffer, 255, 0); //recieve file extension from server
+			readFile(server->getISock(), buffer);
+			send(server->getISock(), "ack", (int)strlen("ack") + 1, 0);
+			printf("exited readFile function\n");
+			sprintf(buffer,"end of file"); //prevent continued looping
+
+			output = fopen("..\\server_in.txt", "a");
+			fprintf(output,"reeceeiveed filee!\n");
+			fclose(output);
+		}
 		else //message sent to server
 		{
 			send(server->getISock(),"ack",(int)strlen("ack") + 1,0); //reply with ack
