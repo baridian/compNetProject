@@ -3,8 +3,11 @@
 #include <assert.h>
 #include <unistd.h>
 #include <zconf.h>
+#include <conio.h>
+#include <windows.h>
 #include "Buffer.h"
 #include "wrap_string.h"
+#include "process_binary.h"
 
 //how to build: add make to PATH
 //make -f client_main.mak
@@ -30,64 +33,14 @@ SOCKET makeSocket(const char *address, int portNumber)
 	return mySocket;
 }
 
-//function to perform file read in
-void readFile(SOCKET mySocket, char *type)
-{
-	char *buffer = (char *)malloc(sizeof(char) * 255);
-	int length;
-	FILE *output = (FILE *)buffer;
-	int i;
-	int outputFileNum = 0;
-
-	//send request for next line of file
-	send(mySocket,"file next",(int)strlen("file next") + 1, 0);
-
-	//printf("\"%s\"\n",type);
-
-	//attempt opening new files until one files to open, meaning the name hasn't been used
-	//printf("output = %p\n",output);
-	while(output != NULL)
-	{
-		sprintf(buffer, "out%d.%s", ++outputFileNum, type);
-		output = fopen(buffer,"r");
-		fclose(output);
-	}
-	//printf("desired file name = %s",buffer);
-	output = fopen(buffer,"wb");//create file with this name
-	if(output == NULL)
-	{
-		fprintf(stderr, "ERROR: could not create output file\n");
-		exit(1);
-	}
-
-	//each file line is 255 long unless it's the last one, in which case it's shorter.
-	do
-	{
-		length = recv(mySocket,buffer, 255, 0);
-		//printf("length = %d\n",length);
-		fwrite(buffer,sizeof(char),length,output);
-		send(mySocket,"file next",(int)strlen("file next") + 1, 0);
-	} while(length == 255);
-
-	//printf("check for eof\n");
-	//confirm that end of file is received
-	recv(mySocket, buffer, 255, 0);
-	if(strcmp(buffer, "end of file") != 0)
-	{
-		fprintf(stderr, "expected end of file token, received \"%s\"\n",buffer);
-		exit(1);
-	}
-	fclose(output);
-	free(buffer);
-	printf("file received!\n");
-}
-
 //attempt to display messages
 void displayMessages(SOCKET mySocket)
 {
 	char *buffer = (char *)malloc(sizeof(char)*255);
 	int bufferLength = 255;
 	int length;
+
+	Sleep(100);
 
 	//while not eof
 	while(strcmp(buffer, "end of file") != 0)
@@ -130,36 +83,90 @@ void displayMessages(SOCKET mySocket)
 
 int main()
 {
-	char *input = (char *)malloc(sizeof(char)*255);
 	SOCKET serverSocket;
-	Buffer buffer;
+	char *input = (char *)malloc(sizeof(char)*255);
+	char *buffer = (char *)malloc(sizeof(char)*255);
+	char *commandBuffer = (char *)malloc(sizeof(char)*255);
+	char *kbBuffer = (char *)malloc(sizeof(char) * 255);
+	FILE *source;
+	FILE *outgoing;
+	int bufferIndex = 0;
+	int kbChar;
 
 	printf("please enter server address: ");
 	scanf("%s",input);
 	getchar();
 	serverSocket = makeSocket(input,80);
 
-	printf("send exit to abort conversation\n");
+	printf("type exit to abort conversation or send to transfer a file\n");
 	while(strcmp(input,"exit\n") != 0)
 	{
-		scanf("%[^\n]s", input);
+		/*scanf("%[^\n]s", input);
 		getchar();
-		strcat(input,"\n");
-		if(strcmp(input,"exit\n") != 0)
+		strcat(input,"\n");*/
+
+		if(_kbhit()) //non-blocking scanf
 		{
-			wrap(input);
-			send(serverSocket, input, (int) strlen(input), 0);
-			recv(serverSocket, input, 255, 0);
-			if (strcmp(input, "ack") != 0)
+			kbChar = _getch();
+			printf("%c", (int) kbChar);
+			if (kbChar == '\r')
 			{
-				fprintf(stderr, "ERROR: received %s, not ack\n", input);
-				exit(1);
+				printf("\n");
+				kbBuffer[bufferIndex++] = '\n';
+				kbBuffer[bufferIndex++] = '\0';
+				bufferIndex = 0;
+				strcpy(input, kbBuffer);
 			}
-			//printf("ack'ed\n");
-			send(serverSocket, "read", (int) strlen("read") + 1, 0);
-			//printf("sent read command\n");
-			displayMessages(serverSocket);
+			else
+			{
+				kbBuffer[bufferIndex++] = (char) kbChar;
+			}
 		}
+
+		if(strcmp(input,"exit\n") != 0 && strlen(input) > 0)
+		{
+			if(strcmp(input, "send\n") == 0) //file transfer handler
+			{
+				printf("enter path: ");
+				scanf("%s",buffer);
+				getchar();
+				source = fopen(buffer,"r");
+				if(source == NULL)
+					printf("warning: invalid file\n");
+				else
+				{
+					outgoing = fopen("client_out.txt","a");
+					fprintf(outgoing,"file\n%s\n", strstr(buffer, ".") + 1);
+					fclose(outgoing);
+					sprintf(commandBuffer,"type %s >> client_out.txt", buffer);
+					system(commandBuffer);
+				}
+				fclose(source);
+
+				sendBinaryFile(serverSocket, outgoing, "client_out.txt");
+
+			}
+			else //text message
+			{
+				wrap(input);
+				send(serverSocket, input, (int) strlen(input), 0);
+				recv(serverSocket, input, 255, 0);
+				if (strcmp(input, "ack") != 0)
+				{
+					fprintf(stderr, "ERROR: received %s, not ack\n", input);
+					exit(1);
+				}
+				//printf("ack'ed\n");
+				//printf("sent read command\n");
+			}
+		}
+		else if(strcmp(input,"exit\n") == 0)
+			break;
+
+		send(serverSocket, "read", (int) strlen("read") + 1, 0); //update
+		displayMessages(serverSocket);
+
+		input[0] = '\0';
 	}
 	shutdown(serverSocket, SD_SEND);
 	closesocket(serverSocket);

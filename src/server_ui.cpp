@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <conio.h>
+#include <windows.h>
 #include "wrap_string.h"
 
 
@@ -8,6 +10,9 @@ int main()
 {
 	char *buffer = (char *)malloc(sizeof(char) * 255);
 	char *commandBuffer = (char *)malloc(sizeof(char) * 255);
+	char *kbBuffer = (char *)malloc(sizeof(char) * 255);
+	int kbChar;
+	int bufferIndex = 0;
 
 	FILE *outgoing;
 	FILE *incoming;
@@ -17,25 +22,44 @@ int main()
 
 	do
 	{
-		scanf("%[^\n]s", buffer);
-		getchar();
+		//scanf("%[^\n]s", buffer);
+		//getchar();
 
-		if(strcmp(buffer, "exit") != 0)
+		if(_kbhit())
 		{
-			if(strcmp(buffer, "send") == 0)
+			kbChar = _getch();
+			printf("%c",(int)kbChar);
+			if(kbChar == '\r')
 			{
-				printf("enter path: ");
+				printf("\n");
+				kbBuffer[bufferIndex++] = '\0';
+				bufferIndex = 0;
+				strcpy(buffer,kbBuffer);
+			}
+			else
+			{
+				kbBuffer[bufferIndex++] = (char)kbChar;
+			}
+		}
+
+		if(strcmp(buffer, "exit") != 0 && strlen(buffer) > 0)
+		{
+			if(strcmp(buffer, "send") == 0) //if file transfer requested
+			{
+				printf("enter path: "); //get path
 				scanf("%s",buffer);
-				getchar();
-				source = fopen(buffer,"r");
+				getchar(); //chomp \n
+
+				source = fopen(buffer,"r"); //confirm file exists
 				if(source == NULL)
 					printf("warning: invalid file\n");
-				else
+				else //file exists
 				{
-					outgoing = fopen("..\\server_out.txt","a");
+					outgoing = fopen("..\\server_out.txt","a"); //print header data
 					fprintf(outgoing,"file\n%s\n", strstr(buffer, ".") + 1);
 					fclose(outgoing);
-					sprintf(commandBuffer,"type %s >> ..\\server_out.txt", buffer);
+
+					sprintf(commandBuffer,"type %s >> ..\\server_out.txt", buffer); //transfer file contents
 					system(commandBuffer);
 				}
 				fclose(source);
@@ -48,18 +72,24 @@ int main()
 				fclose(outgoing);
 			}
 
-			incoming = fopen("..\\server_in.txt", "r");
-			while (fscanf(incoming, "%[^\n]s", buffer) == 1)
-			{
-				fgetc(incoming);
-				unwrap(buffer);
-				printf(">: %s\n", buffer);
-			}
-			fclose(incoming);
-
-			incoming = fopen("..\\server_in.txt","w");
-			fclose(incoming);
 		}
+		else if(strcmp(buffer, "exit") == 0)
+			break;
+
+		Sleep(100);
+		incoming = fopen("..\\server_in.txt", "r"); //display incoming messages
+		while (fscanf(incoming, "%[^\n]s", buffer) == 1)
+		{
+			fgetc(incoming);
+			unwrap(buffer);
+			printf(">: %s\n", buffer);
+		}
+		fclose(incoming);
+
+		incoming = fopen("..\\server_in.txt","w"); //clear daemon incoming file
+		fclose(incoming);
+
+		buffer[0] = '\0';
 
 	} while(strcmp(buffer, "exit") != 0);
 
