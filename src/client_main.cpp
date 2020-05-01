@@ -95,7 +95,7 @@ int main()
 	printf("please enter server address: ");
 	scanf("%s",input);
 	getchar();
-	serverSocket = makeSocket(input,80);
+	serverSocket = makeSocket(input,5150);
 
 	printf("type exit to abort conversation or send to transfer a file\n");
 	while(strcmp(input,"exit\n") != 0)
