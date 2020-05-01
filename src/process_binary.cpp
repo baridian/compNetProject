@@ -61,7 +61,10 @@ void sendBinaryFile(SOCKET socket, FILE *input, const char *file)
 	long long fileLength;
 	int messageLength;
 
+	fclose(input);
+	input = fopen(file,"rb");
 	fgetc(input); //chomp \n
+	//printf("start = %d\n",(int)ftell(input));
 
 	send(socket, "file",(int)strlen("file") + 1, 0); //sent to initiate file read mode
 
@@ -72,9 +75,11 @@ void sendBinaryFile(SOCKET socket, FILE *input, const char *file)
 		exit(1);
 	}
 
-	fscanf(input, "%[^\n]s",buffer); //send file extension to client
-	fgetc(input);
+	fscanf(input, "%s",buffer); //send file extension to client
+	fgetc(input); //chomp \r
+	fgetc(input); //chomp \n
 	oldPosition = ftell(input);
+	//printf("extension = %s\n",buffer);
 	send(socket, buffer, 255, 0);
 	recv(socket, buffer, 255, 0);
 
@@ -86,7 +91,7 @@ void sendBinaryFile(SOCKET socket, FILE *input, const char *file)
 
 	fclose(input); //return to old position
 	input = fopen(file,"rb");
-	fseek(input, oldPosition, SEEK_SET);
+	fseek(input, (long)oldPosition, SEEK_SET);
 	i = oldPosition;
 
 	//printf("start position = %d\n", i);
