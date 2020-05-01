@@ -58,8 +58,8 @@ int main()
 
 	do //while connection open
 	{
-		receivedLength = server->receive(buffer, bufferLength);
-		printf("received\n");
+		receivedLength = recv(server->getISock(), buffer, 255, 0);
+		printf("received %s\n", buffer);
 		if(strcmp(buffer, "read") == 0) //if special read command received
 		{
 			printf("attempting read\n");

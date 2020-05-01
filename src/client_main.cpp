@@ -2,7 +2,6 @@
 #include <winsock2.h>
 #include <assert.h>
 #include <unistd.h>
-#include <zconf.h>
 #include <conio.h>
 #include <windows.h>
 #include "Buffer.h"
@@ -152,6 +151,7 @@ int main()
 			}
 			else //text message
 			{
+				//printf("sending \"%s\"\n",input);
 				wrap(input);
 				send(serverSocket, input, (int) strlen(input), 0);
 				recv(serverSocket, input, 255, 0);
@@ -167,8 +167,11 @@ int main()
 		else if(strcmp(input,"exit\n") == 0)
 			break;
 
+		//printf("displaying\n");
 		send(serverSocket, "read", (int) strlen("read") + 1, 0); //update
+		//printf("sent read\n");
 		displayMessages(serverSocket);
+		//printf("dispayed\n");
 
 		input[0] = '\0';
 	}
