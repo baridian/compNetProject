@@ -2,7 +2,7 @@
 #include "Server.h"
 
 #define PORT_NUMBER 5150
-#define HOST_BY_NAME "10.50.120.179"
+#define HOST_BY_NAME "10.50.123.39"
 
 int Server::serverExists = 0;
 

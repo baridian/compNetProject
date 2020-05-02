@@ -60,10 +60,16 @@ void sendBinaryFile(SOCKET socket, FILE *input, const char *file)
 	long long i;
 	long long fileLength;
 	int messageLength;
+	char firstChar;
 
 	fclose(input);
 	input = fopen(file,"rb");
-	fgetc(input); //chomp \n
+	firstChar = fgetc(input); //chomp \n
+	if(firstChar == 'f')
+	{
+		while(firstChar != '\n')
+			firstChar = fgetc(input);
+	}
 	//printf("start = %d\n",(int)ftell(input));
 
 	send(socket, "file",(int)strlen("file") + 1, 0); //sent to initiate file read mode
